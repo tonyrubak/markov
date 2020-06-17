@@ -47,7 +47,11 @@ def generate_text(prefix,model):
         r = np.random.uniform()
         p = 0
         j = 0
-        row = matrix[word,:] / matrix[word,:].sum()
+        s = matrix[word,:].sum()
+        if s == 0:
+            break
+        else:
+            row = matrix[word,:] / matrix[word,:].sum()
         while p < r:
             p += row[0,j]
             j += 1
@@ -59,5 +63,6 @@ with open("data/log") as file:
     text = file.readlines()
 
 mc = build_markov(text)
-generate_text("synergy",mc)
+for _ in range(1000):
+    print(generate_text("synergy",mc))
 write_model(mc)
