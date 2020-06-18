@@ -5,11 +5,13 @@ import string
 import time
 from scipy.sparse import csr_matrix, lil_matrix, load_npz, save_npz
 
+
 def parse_line(text):
     return re.split(r"\W+",
-                   text.translate(
-                       str.maketrans("", "",
-                                     string.punctuation)).lower().rstrip())
+                    text.translate(
+                        str.maketrans("", "",
+                                      string.punctuation)).lower().rstrip())
+
 
 def build_markov(text):
     bow_dict = {}
@@ -19,7 +21,7 @@ def build_markov(text):
     for line in text:
         line_processesd = parse_line(line)
         line_length = len(line_processesd)
-        for (idx,word) in enumerate(line_processesd):
+        for (idx, word) in enumerate(line_processesd):
             if word in bow_dict:
                 bow_dict[word]["_count"] += 1
             else:
@@ -39,13 +41,13 @@ def build_markov(text):
         inv_index.append(k)
     # Now actually build the markov chain model
     model = lil_matrix((nwords, nwords))
-    for (idx,word) in enumerate(inv_index):
+    for (idx, word) in enumerate(inv_index):
         word_idx = index_dict[word]
         for next_word in bow_dict[word]:
             if next_word == "_count":
                 continue
             next_word_idx = index_dict[next_word]
-            model[word_idx,next_word_idx] = bow_dict[word][next_word]
+            model[word_idx, next_word_idx] = bow_dict[word][next_word]
     return (index_dict, inv_index, model.tocsr())
 
 
@@ -84,6 +86,7 @@ def generate_text(prefix, model):
         word = j - 1
     return res
 
+
 def update_model(model, text):
     word_dict = model[0]
     inv_index = model[1]
@@ -91,7 +94,7 @@ def update_model(model, text):
     for line in text:
         line_processed = parse_line(line)
         line_length = len(line_processed)
-        for (idx,word) in enumerate(line_processed):
+        for (idx, word) in enumerate(line_processed):
             if idx >= line_length - 1:
                 break
             if word in word_dict:
@@ -99,30 +102,34 @@ def update_model(model, text):
             else:
                 inv_index.append(word)
                 word_idx = word_dict[word] = len(inv_index)
-                matrix.resize((word_idx + 1,word_idx + 1))
+                matrix.resize((word_idx + 1, word_idx + 1))
             next_word = line_processed[idx+1]
             if next_word in word_dict:
                 next_idx = word_dict[next_word]
             else:
                 inv_index.append(next_word)
                 next_idx = word_dict[next_word] = len(inv_index)
-                matrix.resize((next_idx + 1,next_idx + 1))
-            matrix[word_idx,next_idx] += 1
-    return (word_dict,inv_index,matrix.tocsr())
+                matrix.resize((next_idx + 1, next_idx + 1))
+            matrix[word_idx, next_idx] += 1
+    return (word_dict, inv_index, matrix.tocsr())
+
 
 def reindex_model(model):
     inv_index = model[1]
     matrix = model[2]
     new_matrix = lil_matrix(matrix.shape)
     word_counts = zip(inv_index, matrix.sum(axis=1))
-    new_inv_index = [k for (k,_) in sorted(word_counts,
-                                           key=lambda item: item[1],
-                                           reverse=True)]
-    new_word_dict = dict([(word,idx) for (idx,word) in enumerate(new_inv_index)])
-    new_idxs = [*map(lambda x: new_word_dict[inv_index[x]],range(matrix.shape[0]))]
-    for row,col in zip(*matrix.nonzero()):
-        new_matrix[new_idxs[row],new_idxs[col]] = matrix[row,col]
-    return (new_word_dict,new_inv_index,new_matrix.tocsr())
+    new_inv_index = [k for (k, _) in sorted(word_counts,
+                                            key=lambda item: item[1],
+                                            reverse=True)]
+    new_word_dict = dict([(word, idx)
+                          for (idx, word) in enumerate(new_inv_index)])
+    new_idxs = [*map(lambda x: new_word_dict[inv_index[x]],
+                     range(matrix.shape[0]))]
+    for row, col in zip(*matrix.nonzero()):
+        new_matrix[new_idxs[row], new_idxs[col]] = matrix[row, col]
+    return (new_word_dict, new_inv_index, new_matrix.tocsr())
+
 
 mc = reindex_model(mc)
 print(f"Load factor: {mc[2].nnz/(mc[2].shape[0] ** 2)}")
@@ -130,12 +137,14 @@ print(f"Load factor: {mc[2].nnz/(mc[2].shape[0] ** 2)}")
 with open("data/log") as file:
     text = file.readlines()
 
+
 def time_construction():
     print("Constructing markov chain model...")
     st = time.perf_counter()
     build_markov(text)
     end = time.perf_counter()
     print(f"Constructed model in {end - st} seconds.")
+
 
 for _ in range(1000):
     print(generate_text("dave", mc))
