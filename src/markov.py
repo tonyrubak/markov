@@ -4,6 +4,11 @@ import re
 import string
 from scipy.sparse import csr_matrix, lil_matrix, load_npz, save_npz
 
+def parse_line(text):
+    return re.split(r"\W+",
+                   text.translate(
+                       str.maketrans("", "",
+                                     string.punctuation)).lower().rstrip())
 
 def build_markov(text):
     bow_dict = {}
@@ -11,10 +16,7 @@ def build_markov(text):
     inv_index = []
     # First build a bag-of-words model
     for line in text:
-        line_processesd = re.split(
-            r"\W+",
-            line.translate(
-                str.maketrans("", "", string.punctuation)).lower().rstrip())
+        line_processesd = parse_line(line)
         line_length = len(line_processesd)
         for (idx,word) in enumerate(line_processesd):
             if word in bow_dict:
