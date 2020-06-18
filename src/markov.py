@@ -101,14 +101,14 @@ def update_model(model, text):
                 word_idx = word_dict[word]
             else:
                 inv_index.append(word)
-                word_idx = word_dict[word] = len(inv_index)
+                word_idx = word_dict[word] = len(inv_index) - 1
                 matrix.resize((word_idx + 1, word_idx + 1))
             next_word = line_processed[idx+1]
             if next_word in word_dict:
                 next_idx = word_dict[next_word]
             else:
                 inv_index.append(next_word)
-                next_idx = word_dict[next_word] = len(inv_index)
+                next_idx = word_dict[next_word] = len(inv_index) - 1
                 matrix.resize((next_idx + 1, next_idx + 1))
             matrix[word_idx, next_idx] += 1
     return (word_dict, inv_index, matrix.tocsr())
@@ -141,7 +141,7 @@ with open("data/log") as file:
 def time_construction():
     print("Constructing markov chain model...")
     st = time.perf_counter()
-    build_markov(text)
+    mc = build_markov(text)
     end = time.perf_counter()
     print(f"Constructed model in {end - st} seconds.")
 
