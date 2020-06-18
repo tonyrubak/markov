@@ -84,6 +84,48 @@ def generate_text(prefix, model):
         word = j - 1
     return res
 
+def update_model(model, text):
+    word_dict = model[0]
+    inv_index = model[1]
+    matrix = model[2].tolil()
+    for line in text:
+        line_processed = parse_line(line)
+        line_length = len(line_processed)
+        for (idx,word) in enumerate(line_processed):
+            if idx >= line_length - 1:
+                break
+            if word in word_dict:
+                word_idx = word_dict[word]
+            else:
+                inv_index.append(word)
+                word_idx = word_dict[word] = len(inv_index)
+                matrix.resize((word_idx + 1,word_idx + 1))
+            next_word = line_processed[idx+1]
+            if next_word in word_dict:
+                next_idx = word_dict[next_word]
+            else:
+                inv_index.append(next_word)
+                next_idx = word_dict[next_word] = len(inv_index)
+                matrix.resize((next_idx + 1,next_idx + 1))
+            matrix[word_idx,next_idx] += 1
+    return (word_dict,inv_index,matrix.tocsr())
+
+def reindex_model(model):
+    inv_index = model[1]
+    matrix = model[2]
+    new_matrix = lil_matrix(matrix.shape)
+    word_counts = zip(inv_index, matrix.sum(axis=1))
+    new_inv_index = [k for (k,_) in sorted(word_counts,
+                                           key=lambda item: item[1],
+                                           reverse=True)]
+    new_word_dict = dict([(word,idx) for (idx,word) in enumerate(new_inv_index)])
+    new_idxs = [*map(lambda x: new_word_dict[inv_index[x]],range(matrix.shape[0]))]
+    for row,col in zip(*matrix.nonzero()):
+        new_matrix[new_idxs[row],new_idxs[col]] = matrix[row,col]
+    return (new_word_dict,new_inv_index,new_matrix.tocsr())
+
+mc = reindex_model(mc)
+print(f"Load factor: {mc[2].nnz/(mc[2].shape[0] ** 2)}")
 
 with open("data/log") as file:
     text = file.readlines()
