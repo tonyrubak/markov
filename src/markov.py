@@ -2,6 +2,7 @@ import numpy as np
 import json
 import re
 import string
+import time
 from scipy.sparse import csr_matrix, lil_matrix, load_npz, save_npz
 
 def parse_line(text):
@@ -90,7 +91,7 @@ with open("data/log") as file:
 def time_construction():
     print("Constructing markov chain model...")
     st = time.perf_counter()
-    mc = build_markov(text)
+    build_markov(text)
     end = time.perf_counter()
     print(f"Constructed model in {end - st} seconds.")
 
