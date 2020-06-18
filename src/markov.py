@@ -30,7 +30,8 @@ def build_markov(text):
     nwords = len(bow_dict.keys())
     # Next assign indexes to words based on word counts
     for (i, (k, _)) in enumerate(sorted(bow_dict.items(),
-                                        key=lambda item: item[1]["_count"], reverse=True)):
+                                        key=lambda item: item[1]["_count"],
+                                        reverse=True)):
         index_dict[k] = i
         inv_index.append(k)
     # Now actually build the markov chain model
