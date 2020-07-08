@@ -5,13 +5,15 @@ import string
 import time
 from scipy.sparse import csr_matrix, lil_matrix, load_npz, save_npz
 
+def parse_word(word):
+    trans = str.maketrans("","",string.punctuation)
+    if not (word.startswith("<:") or word.startswith(":")):
+        return word.translate(trans).lower()
+    return word
 
 def parse_line(text):
-    return re.split(r"\W+",
-                    text.translate(
-                        str.maketrans("", "",
-                                      string.punctuation)).lower().rstrip())
-
+    return [*filter(lambda x: x != "",
+                    map(parse_word,re.split(r"\s+", text.rstrip())))]
 
 def build_markov(text):
     bow_dict = {}
@@ -63,7 +65,7 @@ def read_model():
     return (model["index"], model["inverse"], load_npz("data/model.npz"))
 
 
-def generate_text(prefix, model):
+def generate_text(model, prefix):
     length = 10
     word_index = model[0]
     inv_index = model[1]
@@ -149,3 +151,6 @@ def time_construction():
 for _ in range(1000):
     print(generate_text("dave", mc))
 write_model(mc)
+
+generate_text(mc,"dave")
+[word for word in mc[0].keys() if "clap" in word]
