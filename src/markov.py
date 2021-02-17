@@ -2,6 +2,7 @@ import numpy as np
 import json
 import re
 import string
+import sys
 import time
 from scipy.sparse import csr_matrix, lil_matrix, load_npz, save_npz
 
@@ -60,9 +61,9 @@ def write_model(model):
 
 
 def read_model():
-    with open("data/model.json") as file:
+    with open("model.json") as file:
         model = json.load(file)
-    return (model["index"], model["inverse"], load_npz("data/model.npz"))
+    return (model["index"], model["inverse"], load_npz("model.npz"))
 
 
 def generate_text(model, prefix):
@@ -132,25 +133,40 @@ def reindex_model(model):
         new_matrix[new_idxs[row], new_idxs[col]] = matrix[row, col]
     return (new_word_dict, new_inv_index, new_matrix.tocsr())
 
+def main():
+    if len(sys.argv) != 2:
+        raise ValueError("Usage: python3 markov.py [update|reindex]")
+    model = read_model()
+    with open("log") as file:
+        text = file.readlines()
+    model = update_model(model,text)
+    if sys.argv[1].lower() == "reindex":
+        model = reindex_model(model)
+    elif sys.argv[1].lower() != "update":
+        raise ValueError("Usage: python3 markov.py [update|reindex]")
+    write_model(model)
 
-mc = reindex_model(mc)
-print(f"Load factor: {mc[2].nnz/(mc[2].shape[0] ** 2)}")
-
-with open("data/log") as file:
-    text = file.readlines()
+main()
 
 
-def time_construction():
-    print("Constructing markov chain model...")
-    st = time.perf_counter()
-    mc = build_markov(text)
-    end = time.perf_counter()
-    print(f"Constructed model in {end - st} seconds.")
+# mc = reindex_model(mc)
+# print(f"Load factor: {mc[2].nnz/(mc[2].shape[0] ** 2)}")
+
+# with open("data/log") as file:
+#     text = file.readlines()
 
 
-for _ in range(1000):
-    print(generate_text("dave", mc))
-write_model(mc)
+# def time_construction():
+#     print("Constructing markov chain model...")
+#     st = time.perf_counter()
+#     mc = build_markov(text)
+#     end = time.perf_counter()
+#     print(f"Constructed model in {end - st} seconds.")
 
-generate_text(mc,"dave")
-[word for word in mc[0].keys() if "clap" in word]
+
+# for _ in range(1000):
+#     print(generate_text("dave", mc))
+# write_model(mc)
+
+# generate_text(mc,"dave")
+# [word for word in mc[0].keys() if "clap" in word]
