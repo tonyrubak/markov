@@ -134,16 +134,19 @@ def reindex_model(model):
     return (new_word_dict, new_inv_index, new_matrix.tocsr())
 
 def main():
-    if len(sys.argv) != 2:
-        raise ValueError("Usage: python3 markov.py [update|reindex]")
-    model = read_model()
-    with open("log") as file:
+    if len(sys.argv) != 3:
+        raise ValueError("Usage: python3 markov.py [create|update|reindex] <logfile>")
+    with open(sys.argv[2]) as file:
         text = file.readlines()
-    model = update_model(model,text)
-    if sys.argv[1].lower() == "reindex":
-        model = reindex_model(model)
-    elif sys.argv[1].lower() != "update":
-        raise ValueError("Usage: python3 markov.py [update|reindex]")
+    if sys.argv[1].lower() == "create":
+        model = build_markov(text)
+    else:
+        model = read_model()
+        if sys.argv[1].lower() == "reindex":
+            model = update_model(model,text)
+            model = reindex_model(model)
+        elif sys.argv[1].lower() == "update":
+            model = update_model(model,text)
     write_model(model)
 
 main()
