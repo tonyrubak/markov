@@ -142,11 +142,9 @@ def main():
         model = build_markov(text)
     else:
         model = read_model()
+        model = update_model(model,text)
         if sys.argv[1].lower() == "reindex":
-            model = update_model(model,text)
             model = reindex_model(model)
-        elif sys.argv[1].lower() == "update":
-            model = update_model(model,text)
     write_model(model)
 
 main()
