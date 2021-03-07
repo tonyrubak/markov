@@ -134,7 +134,7 @@ def reindex_model(model):
     return (new_word_dict, new_inv_index, new_matrix.tocsr())
 
 def main():
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 3 or not (sys.argv[1].lower() in ["create", "update", "reindex"]):
         raise ValueError("Usage: python3 markov.py [create|update|reindex] <logfile>")
     with open(sys.argv[2]) as file:
         text = file.readlines()
